@@ -467,4 +467,5 @@ class ObesityPredictionApp:
 if __name__ == "__main__":
     root = tk.Tk()
     app = ObesityPredictionApp(root)
-    root.mainloop()
+    root.mainloop() 
+    

@@ -1,470 +1,358 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+#import part
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageTk
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import StackingClassifier
 
-# Define color scheme
-PINK = "#FFB6C1"  # Light pink
-BEIGE = "#F5F5DC"  # Beige
-DARK_PINK = "#FF69B4"  # Hot pink for buttons
+#import data
+df_train = pd.read_csv('data/train_dataset.csv')
+df_test = pd.read_csv('data/test_dataset.csv')
 
-class ObesityPredictionApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Obesity Prediction System")
-        self.root.geometry("800x600")
-        self.root.configure(bg=BEIGE)
-        
-        # Initialize frames
-        self.current_frame = None
-        
-        # Start with login frame
-        self.show_register_frame()
-        
-    def show_register_frame(self):
-        # Remove current frame if exists
-        if self.current_frame:
-            self.current_frame.destroy()
-        
-        # Create new register frame
-        self.current_frame = tk.Frame(self.root, bg=BEIGE)
-        self.current_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        # Register Frame Title
-        title_label = tk.Label(
-            self.current_frame, 
-            text="User Registration", 
-            font=("Arial", 24, "bold"),
-            bg=BEIGE,
-            fg="#333333"
-        )
-        title_label.pack(pady=20)
-        
-        # Information note
-        info_frame = tk.Frame(self.current_frame, bg=PINK, padx=15, pady=10)
-        info_frame.pack(fill="x", padx=20, pady=10)
-        
-        info_text = tk.Label(
-            info_frame,
-            text="Please register to use the Obesity Prediction System.\nYour information will be kept confidential and secure.",
-            font=("Arial", 12),
-            bg=PINK,
-            justify="left"
-        )
-        info_text.pack(anchor="w")
-        
-        # Create register form
-        form_frame = tk.Frame(self.current_frame, bg=BEIGE, padx=20, pady=20)
-        form_frame.pack(pady=20)
-        
-        # Username field
-        username_label = tk.Label(
-            form_frame, 
-            text="Username:", 
-            font=("Arial", 14),
-            bg=BEIGE
-        )
-        username_label.grid(row=0, column=0, sticky="w", pady=10)
-        
-        self.username_entry = tk.Entry(
-            form_frame, 
-            font=("Arial", 14),
-            width=25,
-            bg=PINK
-        )
-        self.username_entry.grid(row=0, column=1, pady=10, padx=10)
-        
-        # Username note
-        username_note = tk.Label(
-            form_frame,
-            text="Choose a username you can easily remember",
-            font=("Arial", 10, "italic"),
-            bg=BEIGE,
-            fg="#666666"
-        )
-        username_note.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10))
-        
-        # Password field
-        password_label = tk.Label(
-            form_frame, 
-            text="Password:", 
-            font=("Arial", 14),
-            bg=BEIGE
-        )
-        password_label.grid(row=2, column=0, sticky="w", pady=10)
-        
-        self.password_entry = tk.Entry(
-            form_frame, 
-            font=("Arial", 14),
-            show="*",
-            width=25,
-            bg=PINK
-        )
-        self.password_entry.grid(row=2, column=1, pady=10, padx=10)
-        
-        # Password note
-        password_note = tk.Label(
-            form_frame,
-            text="For security, consider using a strong password",
-            font=("Arial", 10, "italic"),
-            bg=BEIGE,
-            fg="#666666"
-        )
-        password_note.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 10))
-        
-        # Register button
-        register_button = tk.Button(
-            self.current_frame, 
-            text="Register", 
-            font=("Arial", 14, "bold"),
-            bg=DARK_PINK,
-            fg="white",
-            padx=20,
-            pady=10,
-            command=self.register
-        )
-        register_button.pack(pady=20)
-    
-    def register(self):
-        # Get username and password (not doing anything with them as requested)
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-        
-        # Simple validation
-        if not username or not password:
-            messagebox.showerror("Error", "Please fill in all fields")
-            return
-        
-        # Just show success message and proceed to prediction page
-        messagebox.showinfo("Success", f"Welcome, {username}! Registration successful.")
-        self.show_prediction_frame()
-    
-    def show_prediction_frame(self):
-        # Remove current frame if exists
-        if self.current_frame:
-            self.current_frame.destroy()
-        
-        # Create new prediction frame
-        self.current_frame = tk.Frame(self.root, bg=BEIGE)
-        self.current_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        # Prediction Frame Title
-        title_label = tk.Label(
-            self.current_frame, 
-            text="Obesity Prediction", 
-            font=("Arial", 24, "bold"),
-            bg=BEIGE,
-            fg="#333333"
-        )
-        title_label.pack(pady=10)
-        
-        # Create input form
-        form_frame = tk.Frame(self.current_frame, bg=BEIGE, padx=20, pady=10)
-        form_frame.pack(pady=10)
-        
-        # Add explanation frame at the top
-        info_frame = tk.Frame(form_frame, bg=PINK, padx=10, pady=10)
-        info_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=10)
-        
-        info_text = tk.Label(
-            info_frame,
-            text="Please fill in all fields below. Your information will be used to predict your obesity level and provide health suggestions.",
-            font=("Arial", 11),
-            bg=PINK,
-            wraplength=700,
-            justify="left"
-        )
-        info_text.pack(fill="both")
-        
-        # Create form inputs
-        self.entries = {}
-        
-        # First row (after info frame)
-        row = 1
-        
-        # Basic information section
-        section_label = tk.Label(
-            form_frame, 
-            text="Basic Information:", 
-            font=("Arial", 12, "bold"),
-            bg=BEIGE
-        )
-        section_label.grid(row=row, column=0, columnspan=4, sticky="w", pady=5)
-        
-        row += 1
-        tk.Label(form_frame, text="Age:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["Age"] = tk.Entry(form_frame, font=("Arial", 12), width=15, bg=PINK)
-        self.entries["Age"].grid(row=row, column=1, padx=5, pady=5)
-        self.entries["Age"].insert(0, "30")  # Default value
-        
-        tk.Label(form_frame, text="Height (cm):", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["Height"] = tk.Entry(form_frame, font=("Arial", 12), width=15, bg=PINK)
-        self.entries["Height"].grid(row=row, column=3, padx=5, pady=5)
-        self.entries["Height"].insert(0, "170")  # Default value
-        
-        # Second row
-        row += 1
-        
-        tk.Label(form_frame, text="Weight (kg):", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["Weight"] = tk.Entry(form_frame, font=("Arial", 12), width=15, bg=PINK)
-        self.entries["Weight"].grid(row=row, column=1, padx=5, pady=5)
-        self.entries["Weight"].insert(0, "70")  # Default value
-        
-        tk.Label(form_frame, text="Gender:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["Gender_Male"] = ttk.Combobox(form_frame, values=["Male", "Female"], font=("Arial", 12), width=13)
-        self.entries["Gender_Male"].current(0)
-        self.entries["Gender_Male"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Add explanation for family history
-        row += 1
-        family_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)  # Lighter pink
-        family_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
-        
-        family_info = tk.Label(
-            family_info_frame,
-            text="Family history refers to whether any blood relatives have or had weight-related issues.",
-            font=("Arial", 10, "italic"),
-            bg="#FFD1DC",
-            wraplength=700
-        )
-        family_info.pack(anchor="w")
-        
-        # Third row
-        row += 1
-        
-        tk.Label(form_frame, text="Family History:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["family_history_with_overweight_yes"] = ttk.Combobox(form_frame, values=["Yes", "No"], font=("Arial", 12), width=13)
-        self.entries["family_history_with_overweight_yes"].current(0)
-        self.entries["family_history_with_overweight_yes"].grid(row=row, column=1, padx=5, pady=5)
-        
-        tk.Label(form_frame, text="FCVC:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["FCVC"] = ttk.Combobox(form_frame, values=["1", "2", "3"], font=("Arial", 12), width=13)
-        self.entries["FCVC"].current(1)
-        self.entries["FCVC"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Add explanation for dietary habits
-        row += 1
-        diet_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)
-        diet_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
-        
-        diet_info = tk.Label(
-            diet_info_frame,
-            text="FCVC: Frequency of consumption of vegetables (1=Never, 2=Sometimes, 3=Always)\nNCP: Number of main meals per day\nCAEC: Consumption of food between meals (snacking habits)",
-            font=("Arial", 10, "italic"),
-            bg="#FFD1DC",
-            wraplength=700,
-            justify="left"
-        )
-        diet_info.pack(anchor="w")
-        
-        # Fourth row
-        row += 1
-        
-        tk.Label(form_frame, text="NCP:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["NCP"] = ttk.Combobox(form_frame, values=["1", "2", "3", "4"], font=("Arial", 12), width=13)
-        self.entries["NCP"].current(1)
-        self.entries["NCP"].grid(row=row, column=1, padx=5, pady=5)
-        
-        tk.Label(form_frame, text="CAEC:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["CAEC"] = ttk.Combobox(form_frame, values=["Never", "Sometimes", "Frequently", "Always"], font=("Arial", 12), width=13)
-        self.entries["CAEC"].current(1)
-        self.entries["CAEC"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Add explanation for lifestyle habits
-        row += 1
-        lifestyle_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)
-        lifestyle_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
-        
-        lifestyle_info = tk.Label(
-            lifestyle_info_frame,
-            text="CH2O: Daily water consumption (1=Less than 1L, 2=1-2L, 3=More than 2L)\nCALC: Consumption of alcohol (No/Sometimes/Frequently/Always)\nFAF: Physical activity frequency (0=None, 1=1-2 days, 2=3-4 days, 3=5+ days)\nTUE: Time using technology devices daily (in hours)",
-            font=("Arial", 10, "italic"),
-            bg="#FFD1DC",
-            wraplength=700,
-            justify="left"
-        )
-        lifestyle_info.pack(anchor="w")
-        
-        # Fifth row
-        row += 1
-        
-        tk.Label(form_frame, text="CH2O:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["CH2O"] = ttk.Combobox(form_frame, values=["1", "2", "3"], font=("Arial", 12), width=13)
-        self.entries["CH2O"].current(1)
-        self.entries["CH2O"].grid(row=row, column=1, padx=5, pady=5)
-        
-        tk.Label(form_frame, text="CALC:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["CALC"] = ttk.Combobox(form_frame, values=["No", "Sometimes", "Frequently", "Always"], font=("Arial", 12), width=13)
-        self.entries["CALC"].current(1)
-        self.entries["CALC"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Sixth row
-        row += 1
-        
-        tk.Label(form_frame, text="FAF:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
-        self.entries["FAF"] = ttk.Combobox(form_frame, values=["0", "1", "2", "3"], font=("Arial", 12), width=13)
-        self.entries["FAF"].current(1)
-        self.entries["FAF"].grid(row=row, column=1, padx=5, pady=5)
-        
-        tk.Label(form_frame, text="TUE:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=2, sticky="w", pady=5)
-        self.entries["TUE"] = ttk.Combobox(form_frame, values=["0", "0.5", "1", "2"], font=("Arial", 12), width=13)
-        self.entries["TUE"].current(1)
-        self.entries["TUE"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Predict button
-        predict_button = tk.Button(
-            self.current_frame, 
-            text="Predict", 
-            font=("Arial", 14, "bold"),
-            bg=DARK_PINK,
-            fg="white",
-            padx=20,
-            pady=10,
-            command=self.predict
-        )
-        predict_button.pack(pady=10)
-        
-        # Results frame
-        self.results_frame = tk.Frame(self.current_frame, bg=PINK, padx=15, pady=15)
-        self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
-        
-        self.result_label = tk.Label(
-            self.results_frame,
-            text="Enter your information and click Predict",
-            font=("Arial", 14),
-            bg=PINK,
-            wraplength=700
-        )
-        self.result_label.pack(pady=10)
-        
-        # Back button
-        back_button = tk.Button(
-            self.current_frame, 
-            text="Back to Registration", 
-            font=("Arial", 12),
-            bg=DARK_PINK,
-            fg="white",
-            command=self.show_register_frame
-        )
-        back_button.pack(pady=10)
-    
-    def predict(self):
-        try:
-            # Collect data from form
-            input_data = {}
-            
-            # Handle numeric inputs with proper error checking
-            for key in ["Age", "Height", "Weight"]:
-                try:
-                    value = self.entries[key].get().strip()
-                    if not value:
-                        messagebox.showerror("Input Error", f"Please enter a value for {key}")
-                        return
-                    input_data[key] = float(value)
-                except ValueError:
-                    messagebox.showerror("Input Error", f"Please enter a valid number for {key}")
-                    return
-            
-            # Check for valid height and weight
-            if input_data["Height"] <= 0:
-                messagebox.showerror("Input Error", "Height must be greater than 0")
-                return
-                
-            if input_data["Weight"] <= 0:
-                messagebox.showerror("Input Error", "Weight must be greater than 0")
-                return
-            
-            # Handle dropdown selections
-            for key in ["FCVC", "NCP", "CH2O", "FAF", "TUE"]:
-                try:
-                    input_data[key] = float(self.entries[key].get())
-                except ValueError:
-                    messagebox.showerror("Input Error", f"Please select a valid option for {key}")
-                    return
-            
-            # Handle categorical inputs
-            input_data["Gender_Male"] = 1 if self.entries["Gender_Male"].get() == "Male" else 0
-            input_data["family_history_with_overweight_yes"] = 1 if self.entries["family_history_with_overweight_yes"].get() == "Yes" else 0
-            
-            # Handle CAEC
-            caec_mapping = {"Never": 0, "Sometimes": 1, "Frequently": 2, "Always": 3}
-            input_data["CAEC"] = caec_mapping[self.entries["CAEC"].get()]
-            
-            # Handle CALC
-            calc_mapping = {"No": 0, "Sometimes": 1, "Frequently": 2, "Always": 3}
-            input_data["CALC"] = calc_mapping[self.entries["CALC"].get()]
-            
-            # Calculate BMI for predictions
-            height_m = input_data["Height"] / 100  # Convert cm to m
-            bmi = input_data["Weight"] / (height_m ** 2)
-            
-            # Generate a prediction based on BMI
-            if bmi < 18.5:
-                obesity_level = "Insufficient Weight"
-                suggestions = "Consider increasing caloric intake and consulting with a nutritionist."
-            elif bmi < 25:
-                obesity_level = "Normal Weight"
-                suggestions = "Maintain your healthy lifestyle with balanced diet and regular exercise."
-            elif bmi < 30:
-                obesity_level = "Overweight"
-                suggestions = "Consider more physical activity and reducing caloric intake slightly."
-            elif bmi < 35:
-                obesity_level = "Obesity Type I"
-                suggestions = "Consult with healthcare professional. Focus on balanced diet and regular exercise."
-            elif bmi < 40:
-                obesity_level = "Obesity Type II"
-                suggestions = "Medical consultation recommended. Consider structured weight management program."
-            else:
-                obesity_level = "Obesity Type III"
-                suggestions = "Seek medical advice immediately. Professional weight management intervention needed."
-            
-            # Add factors that might adjust the prediction
-            additional_factors = []
-            if input_data["family_history_with_overweight_yes"] == 1:
-                additional_factors.append("Family history of obesity increases risk.")
-            
-            if input_data["FAF"] <= 1:
-                additional_factors.append("Low physical activity level may contribute to weight gain.")
-            
-            if input_data["CH2O"] <= 1:
-                additional_factors.append("Insufficient water intake may affect metabolism.")
-            
-            if input_data["FCVC"] <= 1:
-                additional_factors.append("Low vegetable consumption may affect nutritional balance.")
-            
-            # Personalized suggestions based on inputs
-            personalized = []
-            if input_data["CAEC"] >= 2:
-                personalized.append("Consider reducing snacking between meals.")
-            
-            if input_data["TUE"] >= 1.5:
-                personalized.append("Try to reduce screen time and increase physical activity.")
-            
-            if input_data["CALC"] >= 2:
-                personalized.append("Reducing alcohol consumption could help with weight management.")
-            
-            # Combine all factors and suggestions
-            factors_text = "\n".join(additional_factors) if additional_factors else "No additional risk factors identified."
-            personalized_text = "\n".join(personalized) if personalized else "Continue with your current healthy habits."
-            
-            # Create the result text
-            result_text = f"Prediction: {obesity_level}\n\nBMI: {bmi:.2f}\n\nFactors:\n{factors_text}\n\nSuggestions:\n{suggestions}\n\nPersonalized Recommendations:\n{personalized_text}"
-            
-            # Update the result label with the prediction
-            self.result_label.config(text=result_text)
-            
-            # Highlight the results frame to make it more visible
-            self.results_frame.config(bg="#FFA0B0")  # Slightly darker pink to draw attention
-            
-            # Show a message box with the prediction summary
-            messagebox.showinfo("Prediction Result", f"Your predicted obesity level is: {obesity_level}")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
-            print(f"Error: {str(e)}")
+#----------------show data at first----------------------
+print("Train Head:")
+print(df_train.head())
+print("-----")
+print("Test head:")
+print(df_test.head())
+print("-----")
+print("Train Info:")
+print(df_train.info())
+print("-----")
+print("Test Info:")
+print(df_test.info())
+print("-----")
+print("Train describe:")
+print(df_train.describe())
+print("-----")
+print("Test describe:")
+print(df_test.describe())
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = ObesityPredictionApp(root)
-    root.mainloop()
+
+
+#-------------Data Preprocessing---------------
+
+df_train['BMI'] = df_train['Weight'] / (df_train['Height'] / 100)**2
+df_test['BMI'] = df_test['Weight'] / (df_test['Height'] / 100)**2
+
+#----------Handle Null Values And Dublicates-----------
+df_train.isnull().sum().sort_values(ascending=False)
+df_test.isnull().sum().sort_values(ascending=False)
+
+mean1=df_train['FCVC'].mean()
+mode1=df_train['CALC'].mode()[0]
+df_train['FCVC'].fillna(mean1,inplace=True)
+df_train['CALC'].fillna(mode1,inplace=True)
+df_train.drop_duplicates(inplace=True)
+df_train.isnull().sum().sort_values(ascending=False)
+
+mean2=df_test['FCVC'].mean()
+mode2=df_test['CALC'].mode()[0]
+df_test['FCVC'].fillna(mean2,inplace=True)
+df_test['CALC'].fillna(mode2,inplace=True)
+df_test.drop_duplicates(inplace=True)
+df_test.isnull().sum().sort_values(ascending=False)
+
+
+#-------------Encoding Categorical Data--------------
+categorical_one_hot  = ['Gender', 'family_history_with_overweight', 'FAVC', 'SMOKE', 'SCC']
+categorical_label = ['CAEC', 'CALC', 'MTRANS','NObeyesdad']
+#One-hot encode only the categorical columns
+df_train = pd.get_dummies(df_train, columns=categorical_one_hot, drop_first=True)
+df_test = pd.get_dummies(df_test, columns=categorical_one_hot, drop_first=True)
+for col in categorical_label:
+    le = LabelEncoder()
+    df_train[col] = le.fit_transform(df_train[col])
+    df_test[col] = le.transform(df_test[col])
+print(df_train.head())
+print("---------------------------------------------------------------------------------------------")
+print(df_test.head())
+
+# ------------------Handle Outliers using IQR method-------------------
+def handle_outliers(df, column):
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    df[column] = np.clip(df[column], lower_bound, upper_bound)
+    return df
+
+# Numerical columns to handle outliers (excluding those already one-hot encoded or label encoded)
+numerical_cols = ['Age', 'Height', 'Weight', 'FCVC','NCP','CH2O','FAF','TUE']
+
+# Multiple boxplots side by side
+plt.figure(figsize=(12, 6))
+sns.boxplot(data=df_train[numerical_cols])
+# plt.xticks(rotation=45)
+plt.title('Boxplots of Numerical Features')
+plt.show()
+
+for col in numerical_cols:
+    df_train = handle_outliers(df_train, col)
+    df_test = handle_outliers(df_test, col)
+
+print(df_train.head())
+print("---------------------------------------------------------------------------------------------")
+print(df_test.head())
+
+
+#---------------Feature Scaling (Standardization)-----------------
+cols_to_scale = ['Age', 'Height', 'Weight', 'FCVC', 'NCP', 'CH2O', 'FAF', 'TUE']
+
+df_train_scaled = df_train.copy()
+df_test_scaled = df_test.copy()
+
+scaler = StandardScaler()
+
+df_train_scaled[cols_to_scale] = scaler.fit_transform(df_train[cols_to_scale])
+df_test_scaled[cols_to_scale] = scaler.transform(df_test[cols_to_scale])
+
+df_train[cols_to_scale] = df_train_scaled[cols_to_scale]
+df_test[cols_to_scale] = df_test_scaled[cols_to_scale]
+
+print(df_train.head())
+print(df_test.head())
+import joblib
+joblib.dump(scaler, 'scaler.pkl')
+
+#-----------------Feature selection------------------
+X = df_train.drop('NObeyesdad', axis=1)
+y = df_train['NObeyesdad']
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X, y)
+
+importances = model.feature_importances_
+feat_importances = pd.Series(importances, index=X.columns)
+
+feat_importances.sort_values(ascending=False).plot(kind='bar', figsize=(10,5))
+plt.title("Feature Importances")
+plt.show()
+
+selected_features = ['Weight', 'Height', 'FCVC', 'Age', 'Gender_Male', 'TUE',
+                     'NCP', 'CH2O', 'FAF', 'family_history_with_overweight_yes',
+                     'CAEC', 'CALC']
+
+X_selected = df_train[selected_features]
+y = df_train['NObeyesdad']
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X_selected, y)
+
+df_train = df_train[selected_features + ['NObeyesdad']]
+df_test = df_test[selected_features + ['NObeyesdad']]
+
+print(df_train.head())
+
+
+
+#--------------Split Features And Target----------
+X_train = df_train.drop('NObeyesdad', axis=1)
+y_train = df_train['NObeyesdad']
+X_test = df_test.drop('NObeyesdad', axis=1)
+y_test = df_test['NObeyesdad']
+
+
+#-----------Function To Evaluate The Model-----------
+def evaluate_model(model, X_train, y_train, X_test, y_test):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print("Accuracy:", accuracy_score(y_test, y_pred))
+    print("Precision:", precision_score(y_test, y_pred, average='weighted'))
+    print("Recall:", recall_score(y_test, y_pred, average='weighted'))
+    print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
+    print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+    print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+
+    #------------Logistic Regression Model---------
+    print("\n--- Logistic Regression ---")
+log_reg = LogisticRegression(max_iter=3000)
+evaluate_model(log_reg, X_train, y_train, X_test, y_test)
+
+#-----------Random Forest Model-------------
+print("\n--- Random Forest ---")
+rf = RandomForestClassifier(random_state=42)
+evaluate_model(rf, X_train, y_train, X_test, y_test)
+
+#---------Decision Tree Model----------
+print("\n--- Decision Tree ---")
+dt = DecisionTreeClassifier(random_state=42)
+evaluate_model(dt, X_train, y_train, X_test, y_test)
+
+#--------Neural Network Model-----------
+print("\n--- Neural Network ---")
+nn = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300)
+evaluate_model(nn, X_train, y_train, X_test, y_test)
+
+#-------Support Vector Machine Model---------
+print("\n--- Support Vector Machine (SVM) ---")
+svm = SVC()
+evaluate_model(svm, X_train, y_train, X_test, y_test)
+
+#---------K-Nearest Neighbors (KNN) Model----------
+print("\n--- K-Nearest Neighbors (KNN) ---")
+knn = KNeighborsClassifier()
+evaluate_model(knn, X_train, y_train, X_test, y_test)
+
+#-------Gradient Boosting Classifier Model-------
+print("\n--- Gradient Boosting Classifier ---")
+gbc = GradientBoostingClassifier(random_state=42)
+evaluate_model(gbc, X_train, y_train, X_test, y_test)
+
+#------Hyper Parameter Logistic Regression------
+HyperParameter_LogReg = {
+    'C': [0.001, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 100],
+    'penalty': ['l1', 'l2'],
+    'solver': ['saga']
+}
+
+logreg = LogisticRegression(max_iter=3000)
+grid_logreg = GridSearchCV(logreg, HyperParameter_LogReg, cv=5, scoring='f1_weighted', n_jobs=-1)
+grid_logreg.fit(X_train, y_train)
+
+print("\n--- Logistic Regression ---")
+print("The Best: ", grid_logreg.best_params_)
+evaluate_model(grid_logreg.best_estimator_, X_train, y_train, X_test, y_test)
+
+#--------Hyper Parameter KNN-----------
+param_grid_knn = {
+    'n_neighbors': [1, 3, 5, 7, 9, 11, 15],
+    'weights': ['uniform', 'distance'],
+     'p': [1, 2],
+    'metric': ['minkowski', 'euclidean', 'chebyshev'],
+    'algorithm': ['auto', 'ball_tree', 'kd_tree']
+}
+
+knn = KNeighborsClassifier()
+grid_knn = GridSearchCV(knn, param_grid_knn, cv=5, scoring='f1_weighted', n_jobs=-1)
+grid_knn.fit(X_train, y_train)
+
+print("\n--- KNN ---")
+print("The Best: ", grid_knn.best_params_)
+evaluate_model(grid_knn.best_estimator_, X_train, y_train, X_test, y_test)
+
+
+#--------------ManualPractical KNN  -----------
+
+knn1 = KNeighborsClassifier(n_neighbors=3, weights='uniform')
+evaluate_model(knn1, X_train, y_train, X_test, y_test)
+
+knn2 = KNeighborsClassifier(n_neighbors=9, weights='distance')
+evaluate_model(knn2, X_train, y_train, X_test, y_test)
+
+#-----------ManualPractical Logistic Regression ------------
+print("\ 1:Manual practical: ")
+logreg1 = LogisticRegression(C=0.01, penalty='l2', solver='saga', max_iter=1000)
+evaluate_model(logreg1, X_train, y_train, X_test, y_test)
+
+print(" 2Manual Practical ::")
+logreg2 = LogisticRegression(C=10, penalty='l1', solver='saga', max_iter=1000)
+evaluate_model(logreg2, X_train, y_train, X_test, y_test)
+
+
+#----------Stacking for Models----------
+base_models = [
+    ('logreg', grid_logreg.best_estimator_),
+    ('knn', grid_knn.best_estimator_),
+    ('rf', rf),
+    ('dt', dt),
+    ('nn', nn),
+    ('svm', svm),
+    ('gbc', gbc)
+]
+
+# استخدام Logistic Regression كـ meta-model
+meta_model = LogisticRegression(max_iter=1000)
+
+# بناء Stacking Classifier
+stack_model = StackingClassifier(
+    estimators=base_models,
+    final_estimator=meta_model,
+    cv=5,             # cross-validation
+    n_jobs=-1,        # استخدام كل الأنوية المتاحة
+    passthrough=False # لو True بيضيف الـ features الأصلية للمدخلات
+)
+
+# تدريب وتقييم الموديل
+print("\n--- Stacking Model ---")
+evaluate_model(stack_model, X_train, y_train, X_test, y_test)
+
+
+#*****************************************
+# Calculate BMI from Height and Weight
+df_train['BMI'] = df_train['Weight'] / ((df_train['Height']/100) ** 2)
+
+# Define numerical columns including the newly calculated BMI
+numerical_cols = ['Age', 'Height', 'Weight', 'FCVC', 'NCP', 'CH2O', 'FAF', 'TUE', 'BMI']
+
+# Verify each column exists before plotting
+existing_cols = [col for col in numerical_cols if col in df_train.columns]
+missing_cols = [col for col in numerical_cols if col not in df_train.columns]
+if missing_cols:
+    print(f"Warning: These columns were not found in the DataFrame: {missing_cols}")
+
+# Create plots for existing columns
+plt.figure(figsize=(15, 12))  # Made taller to accommodate more plots
+for idx, col in enumerate(existing_cols):
+    plt.subplot(3, 3, idx+1)
+    sns.histplot(df_train[col], kde=True, bins=30)
+    plt.title(f'Distribution of {col}')
+plt.tight_layout()
+plt.show()
+
+
+
+#----------------- Correlation Heatmap------------
+plt.figure(figsize=(12,8))
+corr_matrix = df_train.corr()
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Heatmap')
+plt.show()
+
+
+
+#***************************************
+# Boxplots: Feature vs Obesity Level
+categorical_features = ['Gender_Male', 'family_history_with_overweight_yes', 'CAEC', 'CALC']
+
+for feature in categorical_features:
+    plt.figure(figsize=(8, 4))
+    sns.boxplot(x='NObeyesdad', y=feature, data=df_train)
+    plt.title(f'{feature} vs Obesity Level')
+    plt.xticks(rotation=45)
+    plt.show()
+
+# -----------------Countplot of Target------------
+plt.figure(figsize=(8,5))
+sns.countplot(x='NObeyesdad', data=df_train, order=df_train['NObeyesdad'].value_counts().index)
+plt.title('Distribution of Obesity Levels')
+plt.xticks(rotation=45)
+plt.show()
+
+#********************************
+feat_importances.sort_values(ascending=False).plot(kind='barh', figsize=(10,7))
+plt.title("Feature Importances - Random Forest")
+plt.show()
+
+
+
+
+import joblib
+
+joblib.dump(svm, 'svm_model.pkl')
