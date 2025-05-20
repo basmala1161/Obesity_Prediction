@@ -2,9 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import numpy as np
 import pandas as pd
-import joblib
-import os
-from sklearn.svm import SVC
+from PIL import Image, ImageTk
 
 # Define color scheme
 PINK = "#FFB6C1"  # Light pink
@@ -18,58 +16,12 @@ class ObesityPredictionApp:
         self.root.geometry("800x600")
         self.root.configure(bg=BEIGE)
         
-        # Try to load the SVM model or create a simple one for testing
-        try:
-            if os.path.exists('svm_model.pkl'):
-                self.model = joblib.load('svm_model.pkl')
-                print("SVM model loaded successfully")
-            else:
-                print("Model file not found, creating a temporary model")
-                self.create_temporary_model()
-        except Exception as e:
-            print(f"Error loading model: {str(e)}")
-            print("Creating a temporary model instead")
-            self.create_temporary_model()
-        
         # Initialize frames
         self.current_frame = None
         
         # Start with login frame
         self.show_register_frame()
-    
-    def create_temporary_model(self):
-        """Create a simple model that will actually produce different predictions based on inputs"""
-        self.model = SVC()
         
-        # Create a simple sample dataset for training
-        # Just to make the model functional and give different predictions
-        X_sample = np.array([
-            [60, 160, 2, 25, 1, 1, 2, 2, 1, 1, 1, 1],  # Insufficient Weight
-            [65, 170, 2, 30, 1, 1, 2, 2, 1, 0, 1, 1],  # Normal Weight
-            [75, 170, 2, 35, 1, 0.5, 3, 1, 0, 1, 2, 1],  # Overweight Level I
-            [85, 170, 3, 40, 1, 0, 3, 1, 0, 1, 3, 2],  # Overweight Level II
-            [95, 165, 1, 45, 0, 0, 4, 1, 0, 1, 3, 2],  # Obesity Type I
-            [105, 165, 1, 50, 0, 0, 4, 1, 0, 1, 3, 3],  # Obesity Type II
-            [120, 165, 1, 55, 0, 0, 4, 1, 0, 1, 3, 3],  # Obesity Type III
-        ])
-        y_sample = np.array([0, 1, 2, 3, 4, 5, 6])  # Different obesity levels
-        
-        # Train the model
-        self.model.fit(X_sample, y_sample)
-        
-        # Save the model to file for future use
-        try:
-            joblib.dump(self.model, 'svm_model.pkl')
-            print("Temporary model created and saved to svm_model.pkl")
-        except Exception as e:
-            print(f"Could not save model: {str(e)}")
-            
-    def logout(self):
-        # Show confirmation dialog
-        if messagebox.askyesno("Logout Confirmation", "Are you sure you want to logout?"):
-            messagebox.showinfo("Logout", "You have been logged out successfully.")
-            self.show_register_frame()
-            
     def show_register_frame(self):
         # Remove current frame if exists
         if self.current_frame:
@@ -88,6 +40,19 @@ class ObesityPredictionApp:
             fg="#333333"
         )
         title_label.pack(pady=20)
+        
+        # Information note
+        info_frame = tk.Frame(self.current_frame, bg=PINK, padx=15, pady=10)
+        info_frame.pack(fill="x", padx=20, pady=10)
+        
+        info_text = tk.Label(
+            info_frame,
+            text="Please register to use the Obesity Prediction System.\nYour information will be kept confidential and secure.",
+            font=("Arial", 12),
+            bg=PINK,
+            justify="left"
+        )
+        info_text.pack(anchor="w")
         
         # Create register form
         form_frame = tk.Frame(self.current_frame, bg=BEIGE, padx=20, pady=20)
@@ -110,6 +75,16 @@ class ObesityPredictionApp:
         )
         self.username_entry.grid(row=0, column=1, pady=10, padx=10)
         
+        # Username note
+        username_note = tk.Label(
+            form_frame,
+            text="Choose a username you can easily remember",
+            font=("Arial", 10, "italic"),
+            bg=BEIGE,
+            fg="#666666"
+        )
+        username_note.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        
         # Password field
         password_label = tk.Label(
             form_frame, 
@@ -117,7 +92,7 @@ class ObesityPredictionApp:
             font=("Arial", 14),
             bg=BEIGE
         )
-        password_label.grid(row=1, column=0, sticky="w", pady=10)
+        password_label.grid(row=2, column=0, sticky="w", pady=10)
         
         self.password_entry = tk.Entry(
             form_frame, 
@@ -126,7 +101,17 @@ class ObesityPredictionApp:
             width=25,
             bg=PINK
         )
-        self.password_entry.grid(row=1, column=1, pady=10, padx=10)
+        self.password_entry.grid(row=2, column=1, pady=10, padx=10)
+        
+        # Password note
+        password_note = tk.Label(
+            form_frame,
+            text="For security, consider using a strong password",
+            font=("Arial", 10, "italic"),
+            bg=BEIGE,
+            fg="#666666"
+        )
+        password_note.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 10))
         
         # Register button
         register_button = tk.Button(
@@ -142,7 +127,7 @@ class ObesityPredictionApp:
         register_button.pack(pady=20)
     
     def register(self):
-        # Get username and password
+        # Get username and password (not doing anything with them as requested)
         username = self.username_entry.get()
         password = self.password_entry.get()
         
@@ -151,7 +136,7 @@ class ObesityPredictionApp:
             messagebox.showerror("Error", "Please fill in all fields")
             return
         
-        # Show success message and proceed to prediction page
+        # Just show success message and proceed to prediction page
         messagebox.showinfo("Success", f"Welcome, {username}! Registration successful.")
         self.show_prediction_frame()
     
@@ -178,11 +163,36 @@ class ObesityPredictionApp:
         form_frame = tk.Frame(self.current_frame, bg=BEIGE, padx=20, pady=10)
         form_frame.pack(pady=10)
         
+        # Add explanation frame at the top
+        info_frame = tk.Frame(form_frame, bg=PINK, padx=10, pady=10)
+        info_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=10)
+        
+        info_text = tk.Label(
+            info_frame,
+            text="Please fill in all fields below. Your information will be used to predict your obesity level and provide health suggestions.",
+            font=("Arial", 11),
+            bg=PINK,
+            wraplength=700,
+            justify="left"
+        )
+        info_text.pack(fill="both")
+        
         # Create form inputs
         self.entries = {}
         
-        # First row
-        row = 0
+        # First row (after info frame)
+        row = 1
+        
+        # Basic information section
+        section_label = tk.Label(
+            form_frame, 
+            text="Basic Information:", 
+            font=("Arial", 12, "bold"),
+            bg=BEIGE
+        )
+        section_label.grid(row=row, column=0, columnspan=4, sticky="w", pady=5)
+        
+        row += 1
         tk.Label(form_frame, text="Age:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["Age"] = tk.Entry(form_frame, font=("Arial", 12), width=15, bg=PINK)
         self.entries["Age"].grid(row=row, column=1, padx=5, pady=5)
@@ -195,6 +205,7 @@ class ObesityPredictionApp:
         
         # Second row
         row += 1
+        
         tk.Label(form_frame, text="Weight (kg):", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["Weight"] = tk.Entry(form_frame, font=("Arial", 12), width=15, bg=PINK)
         self.entries["Weight"].grid(row=row, column=1, padx=5, pady=5)
@@ -205,8 +216,23 @@ class ObesityPredictionApp:
         self.entries["Gender_Male"].current(0)
         self.entries["Gender_Male"].grid(row=row, column=3, padx=5, pady=5)
         
+        # Add explanation for family history
+        row += 1
+        family_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)  # Lighter pink
+        family_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
+        
+        family_info = tk.Label(
+            family_info_frame,
+            text="Family history refers to whether any blood relatives have or had weight-related issues.",
+            font=("Arial", 10, "italic"),
+            bg="#FFD1DC",
+            wraplength=700
+        )
+        family_info.pack(anchor="w")
+        
         # Third row
         row += 1
+        
         tk.Label(form_frame, text="Family History:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["family_history_with_overweight_yes"] = ttk.Combobox(form_frame, values=["Yes", "No"], font=("Arial", 12), width=13)
         self.entries["family_history_with_overweight_yes"].current(0)
@@ -217,8 +243,24 @@ class ObesityPredictionApp:
         self.entries["FCVC"].current(1)
         self.entries["FCVC"].grid(row=row, column=3, padx=5, pady=5)
         
+        # Add explanation for dietary habits
+        row += 1
+        diet_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)
+        diet_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
+        
+        diet_info = tk.Label(
+            diet_info_frame,
+            text="FCVC: Frequency of consumption of vegetables (1=Never, 2=Sometimes, 3=Always)\nNCP: Number of main meals per day\nCAEC: Consumption of food between meals (snacking habits)",
+            font=("Arial", 10, "italic"),
+            bg="#FFD1DC",
+            wraplength=700,
+            justify="left"
+        )
+        diet_info.pack(anchor="w")
+        
         # Fourth row
         row += 1
+        
         tk.Label(form_frame, text="NCP:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["NCP"] = ttk.Combobox(form_frame, values=["1", "2", "3", "4"], font=("Arial", 12), width=13)
         self.entries["NCP"].current(1)
@@ -229,8 +271,24 @@ class ObesityPredictionApp:
         self.entries["CAEC"].current(1)
         self.entries["CAEC"].grid(row=row, column=3, padx=5, pady=5)
         
+        # Add explanation for lifestyle habits
+        row += 1
+        lifestyle_info_frame = tk.Frame(form_frame, bg="#FFD1DC", padx=5, pady=5)
+        lifestyle_info_frame.grid(row=row, column=0, columnspan=4, sticky="ew", pady=5)
+        
+        lifestyle_info = tk.Label(
+            lifestyle_info_frame,
+            text="CH2O: Daily water consumption (1=Less than 1L, 2=1-2L, 3=More than 2L)\nCALC: Consumption of alcohol (No/Sometimes/Frequently/Always)\nFAF: Physical activity frequency (0=None, 1=1-2 days, 2=3-4 days, 3=5+ days)\nTUE: Time using technology devices daily (in hours)",
+            font=("Arial", 10, "italic"),
+            bg="#FFD1DC",
+            wraplength=700,
+            justify="left"
+        )
+        lifestyle_info.pack(anchor="w")
+        
         # Fifth row
         row += 1
+        
         tk.Label(form_frame, text="CH2O:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["CH2O"] = ttk.Combobox(form_frame, values=["1", "2", "3"], font=("Arial", 12), width=13)
         self.entries["CH2O"].current(1)
@@ -243,6 +301,7 @@ class ObesityPredictionApp:
         
         # Sixth row
         row += 1
+        
         tk.Label(form_frame, text="FAF:", font=("Arial", 12), bg=BEIGE).grid(row=row, column=0, sticky="w", pady=5)
         self.entries["FAF"] = ttk.Combobox(form_frame, values=["0", "1", "2", "3"], font=("Arial", 12), width=13)
         self.entries["FAF"].current(1)
@@ -252,23 +311,6 @@ class ObesityPredictionApp:
         self.entries["TUE"] = ttk.Combobox(form_frame, values=["0", "0.5", "1", "2"], font=("Arial", 12), width=13)
         self.entries["TUE"].current(1)
         self.entries["TUE"].grid(row=row, column=3, padx=5, pady=5)
-        
-        # Add tooltip label to explain abbreviations
-        tooltip_frame = tk.Frame(self.current_frame, bg=BEIGE)
-        tooltip_frame.pack(pady=5)
-        
-        tooltip_text = "FCVC: Frequency of consumption of vegetables\nNCP: Number of main meals\n"
-        tooltip_text += "CAEC: Consumption of food between meals\nCH2O: Consumption of water daily\n"
-        tooltip_text += "CALC: Consumption of alcohol\nFAF: Physical activity frequency\nTUE: Time using technology devices"
-        
-        tooltip_label = tk.Label(
-            tooltip_frame,
-            text=tooltip_text,
-            font=("Arial", 10),
-            bg=BEIGE,
-            justify=tk.LEFT
-        )
-        tooltip_label.pack(pady=5)
         
         # Predict button
         predict_button = tk.Button(
@@ -296,35 +338,16 @@ class ObesityPredictionApp:
         )
         self.result_label.pack(pady=10)
         
-        # Button frame for better layout
-        button_frame = tk.Frame(self.current_frame, bg=BEIGE)
-        button_frame.pack(pady=10, fill="x")
-        
         # Back button
         back_button = tk.Button(
-            button_frame, 
+            self.current_frame, 
             text="Back to Registration", 
             font=("Arial", 12),
-            bg="#A9A9A9",  # Gray color
-            fg="white",
-            padx=10,
-            pady=5,
-            command=self.show_register_frame
-        )
-        back_button.pack(side=tk.LEFT, padx=(20, 10))
-        
-        # Logout button
-        logout_button = tk.Button(
-            button_frame, 
-            text="Logout", 
-            font=("Arial", 12, "bold"),
             bg=DARK_PINK,
             fg="white",
-            padx=15,
-            pady=5,
-            command=self.logout
+            command=self.show_register_frame
         )
-        logout_button.pack(side=tk.RIGHT, padx=(10, 20))
+        back_button.pack(pady=10)
     
     def predict(self):
         try:
@@ -343,20 +366,22 @@ class ObesityPredictionApp:
                     messagebox.showerror("Input Error", f"Please enter a valid number for {key}")
                     return
             
+            # Check for valid height and weight
+            if input_data["Height"] <= 0:
+                messagebox.showerror("Input Error", "Height must be greater than 0")
+                return
+                
+            if input_data["Weight"] <= 0:
+                messagebox.showerror("Input Error", "Weight must be greater than 0")
+                return
+            
             # Handle dropdown selections
-            for key in ["FCVC", "NCP", "CH2O", "FAF"]:
+            for key in ["FCVC", "NCP", "CH2O", "FAF", "TUE"]:
                 try:
                     input_data[key] = float(self.entries[key].get())
                 except ValueError:
                     messagebox.showerror("Input Error", f"Please select a valid option for {key}")
                     return
-            
-            # Handle TUE with special float conversion
-            try:
-                input_data["TUE"] = float(self.entries["TUE"].get())
-            except ValueError:
-                messagebox.showerror("Input Error", "Please select a valid option for TUE")
-                return
             
             # Handle categorical inputs
             input_data["Gender_Male"] = 1 if self.entries["Gender_Male"].get() == "Male" else 0
@@ -370,81 +395,70 @@ class ObesityPredictionApp:
             calc_mapping = {"No": 0, "Sometimes": 1, "Frequently": 2, "Always": 3}
             input_data["CALC"] = calc_mapping[self.entries["CALC"].get()]
             
-            # Calculate BMI for additional information
+            # Calculate BMI for predictions
             height_m = input_data["Height"] / 100  # Convert cm to m
-            bmi = input_data["Weight"] / (height_m * height_m)
+            bmi = input_data["Weight"] / (height_m ** 2)
             
-            # Prepare input data for prediction (in the right order)
-            # Make sure this matches the order used during training
-            features = ['Weight', 'Height', 'FCVC', 'Age', 'Gender_Male', 'TUE', 
-                        'NCP', 'CH2O', 'FAF', 'family_history_with_overweight_yes', 
-                        'CAEC', 'CALC']
+            # Generate a prediction based on BMI
+            if bmi < 18.5:
+                obesity_level = "Insufficient Weight"
+                suggestions = "Consider increasing caloric intake and consulting with a nutritionist."
+            elif bmi < 25:
+                obesity_level = "Normal Weight"
+                suggestions = "Maintain your healthy lifestyle with balanced diet and regular exercise."
+            elif bmi < 30:
+                obesity_level = "Overweight"
+                suggestions = "Consider more physical activity and reducing caloric intake slightly."
+            elif bmi < 35:
+                obesity_level = "Obesity Type I"
+                suggestions = "Consult with healthcare professional. Focus on balanced diet and regular exercise."
+            elif bmi < 40:
+                obesity_level = "Obesity Type II"
+                suggestions = "Medical consultation recommended. Consider structured weight management program."
+            else:
+                obesity_level = "Obesity Type III"
+                suggestions = "Seek medical advice immediately. Professional weight management intervention needed."
             
-            # Create input array for model prediction
-            X_input = np.array([input_data[feature] for feature in features]).reshape(1, -1)
+            # Add factors that might adjust the prediction
+            additional_factors = []
+            if input_data["family_history_with_overweight_yes"] == 1:
+                additional_factors.append("Family history of obesity increases risk.")
             
-            # Make prediction using the SVM model
-            try:
-                prediction = self.model.predict(X_input)[0]
-                
-                # Map the prediction to obesity level
-                obesity_levels = {
-                    0: "Insufficient Weight",
-                    1: "Normal Weight",
-                    2: "Overweight Level I",
-                    3: "Overweight Level II",
-                    4: "Obesity Type I",
-                    5: "Obesity Type II",
-                    6: "Obesity Type III"
-                }
-                
-                obesity_result = obesity_levels.get(prediction, "Unknown")
-                
-            except Exception as e:
-                print(f"Prediction error: {str(e)}")
-                # In case of prediction error, use BMI as a fallback
-                if bmi < 18.5:
-                    obesity_result = "Insufficient Weight"
-                elif bmi < 25:
-                    obesity_result = "Normal Weight"
-                elif bmi < 27:
-                    obesity_result = "Overweight Level I"
-                elif bmi < 30:
-                    obesity_result = "Overweight Level II"
-                elif bmi < 35:
-                    obesity_result = "Obesity Type I"
-                elif bmi < 40:
-                    obesity_result = "Obesity Type II"
-                else:
-                    obesity_result = "Obesity Type III"
+            if input_data["FAF"] <= 1:
+                additional_factors.append("Low physical activity level may contribute to weight gain.")
+            
+            if input_data["CH2O"] <= 1:
+                additional_factors.append("Insufficient water intake may affect metabolism.")
+            
+            if input_data["FCVC"] <= 1:
+                additional_factors.append("Low vegetable consumption may affect nutritional balance.")
+            
+            # Personalized suggestions based on inputs
+            personalized = []
+            if input_data["CAEC"] >= 2:
+                personalized.append("Consider reducing snacking between meals.")
+            
+            if input_data["TUE"] >= 1.5:
+                personalized.append("Try to reduce screen time and increase physical activity.")
+            
+            if input_data["CALC"] >= 2:
+                personalized.append("Reducing alcohol consumption could help with weight management.")
+            
+            # Combine all factors and suggestions
+            factors_text = "\n".join(additional_factors) if additional_factors else "No additional risk factors identified."
+            personalized_text = "\n".join(personalized) if personalized else "Continue with your current healthy habits."
+            
+            # Create the result text
+            result_text = f"Prediction: {obesity_level}\n\nBMI: {bmi:.2f}\n\nFactors:\n{factors_text}\n\nSuggestions:\n{suggestions}\n\nPersonalized Recommendations:\n{personalized_text}"
             
             # Update the result label with the prediction
-            result_text = f"Prediction: {obesity_result}\n\n"
-            result_text += f"Age: {input_data['Age']}\n"
-            result_text += f"Height: {input_data['Height']} cm\n"
-            result_text += f"Weight: {input_data['Weight']} kg\n"
-            result_text += f"BMI: {bmi:.2f}\n"
-            result_text += f"Gender: {'Male' if input_data['Gender_Male'] == 1 else 'Female'}\n"
-            result_text += f"Family history with overweight: {'Yes' if input_data['family_history_with_overweight_yes'] == 1 else 'No'}"
-            
             self.result_label.config(text=result_text)
             
-            # Choose result frame color based on obesity level
-            if "Insufficient" in obesity_result:
-                result_color = "#FFF7AA"  # Light yellow
-            elif "Normal" in obesity_result:
-                result_color = "#AAFFAA"  # Light green
-            elif "Overweight" in obesity_result:
-                result_color = "#FFCC99"  # Light orange
-            else:  # Obesity types
-                result_color = "#FFAAAA"  # Light red
-            
             # Highlight the results frame to make it more visible
-            self.results_frame.config(bg=result_color)
-            self.result_label.config(bg=result_color)
+            self.results_frame.config(bg="#FFA0B0")  # Slightly darker pink to draw attention
             
             # Show a message box with the prediction summary
-            messagebox.showinfo("Prediction Result", f"Your predicted obesity level is: {obesity_result}")
+            messagebox.showinfo("Prediction Result", f"Your predicted obesity level is: {obesity_level}")
             
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
